@@ -30,7 +30,7 @@ public class Compressor {
             System.out.println("Done!");
         }
         catch(IOException e){
-
+            System.out.println(e.getMessage());
         }
     }
 
