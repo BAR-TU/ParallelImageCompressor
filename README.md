@@ -1,2 +1,2 @@
 # ParallelImageCompressor
-PoC for fast parallel image Compressor
+PoC for parallel image Compressor
