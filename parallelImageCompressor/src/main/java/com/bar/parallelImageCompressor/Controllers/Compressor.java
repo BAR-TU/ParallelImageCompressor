@@ -1,5 +1,7 @@
 package com.bar.parallelImageCompressor.Controllers;
 
+import com.bar.parallelImageCompressor.Services.Lossy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,17 +23,21 @@ import java.security.Principal;
 @RequestMapping("/api/compress")
 public class Compressor {
 
+    @Autowired
+    Lossy lossyService;
+
     @GetMapping
-    public void getRandomUser() {
-        File originalImage = new File("C:\\Users\\a.dachkinova\\Desktop\\four.jpg");
-        File compressedImage = new File("C:\\Users\\a.dachkinova\\Desktop\\compressedImage.jpg");
-        try {
-            compressJpegImage(originalImage, compressedImage, 0.7f);
-            System.out.println("Done!");
-        }
-        catch(IOException e){
-            System.out.println(e.getMessage());
-        }
+    public void startCompression() {
+        Lossy.Start();
+//        File originalImage = new File("C:\\Users\\a.dachkinova\\Desktop\\four.jpg");
+//        File compressedImage = new File("C:\\Users\\a.dachkinova\\Desktop\\compressedImage.jpg");
+//        try {
+//            compressJpegImage(originalImage, compressedImage, 0.7f);
+//            System.out.println("Done!");
+//        }
+//        catch(IOException e){
+//            System.out.println(e.getMessage());
+//        }
     }
 
     public static void  compressJpegImage(File originalImage, File compressedImage, float compressionQuality) throws IOException {
