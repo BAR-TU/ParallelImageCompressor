@@ -17,6 +17,7 @@ import java.awt.image.renderable.RenderableImage;
 import java.io.File;
 import java.io.IOException;
 import java.security.Principal;
+import java.util.concurrent.ExecutionException;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -27,7 +28,7 @@ public class Compressor {
     Lossy lossyService;
 
     @GetMapping
-    public void startCompression() {
+    public void startCompression() throws InterruptedException, IOException, ExecutionException {
         Lossy.Start();
 //        File originalImage = new File("C:\\Users\\a.dachkinova\\Desktop\\four.jpg");
 //        File compressedImage = new File("C:\\Users\\a.dachkinova\\Desktop\\compressedImage.jpg");

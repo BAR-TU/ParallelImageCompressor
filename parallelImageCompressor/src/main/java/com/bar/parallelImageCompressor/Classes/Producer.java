@@ -1,25 +1,49 @@
 package com.bar.parallelImageCompressor.Classes;
 
-import java.util.concurrent.BlockingQueue;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.RecursiveAction;
 
-public class Producer implements Runnable {
-    BlockingQueue<String> blockingQueue = null;
+public class Producer extends RecursiveAction {
+    BufferedImage[] imgs;
+    int threshold;
 
-    public Producer(BlockingQueue<String> queue) { this.blockingQueue = queue; }
+    public Producer(BufferedImage[] imgs, int threshold) {
+        this.imgs = imgs;
+        this.threshold = threshold;
+    }
 
     @Override
-    public void run() {
-        for(int i = 0; i < 1000; i++) {
+    protected void compute() {
+        if (imgs.length > threshold) {
+            ForkJoinTask.invokeAll(createSubtasks());
+        }
             try {
-                this.blockingQueue.put(String.valueOf(i));
-            } catch (InterruptedException e) {
+                processing(imgs);
+            } catch (IOException e) {
                 e.printStackTrace();
+                throw new RuntimeException(e);
             }
+    }
+
+    private void processing(BufferedImage[] imgs) throws IOException {
+        for (int i = 0; i < imgs.length; i++)
+        {
+            File outputFile = new File("img" + Thread.currentThread().getName() + "-" + i + ".jpg");
+            ImageIO.write(imgs[i], "jpg", outputFile);
         }
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    }
+    private Collection<Producer> createSubtasks() {
+        List<Producer> dividedTasks = new ArrayList<>();
+        dividedTasks.add(new Producer(Arrays.copyOfRange(imgs, 0, threshold), threshold));
+        dividedTasks.add(new Producer(
+                Arrays.copyOfRange(imgs, threshold, imgs.length), threshold));
+        return dividedTasks;
     }
 }
