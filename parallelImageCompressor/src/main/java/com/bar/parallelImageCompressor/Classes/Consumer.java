@@ -1,5 +1,9 @@
 package com.bar.parallelImageCompressor.Classes;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.BlockingQueue;
@@ -7,16 +11,16 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.RecursiveTask;
 import java.util.function.Supplier;
 
-public class Consumer extends RecursiveTask<String> {
-    BlockingQueue<String> blockingQueue = null;
+public class Consumer implements Supplier<String> {
+    BufferedImage[] imgs;
 
-    public Consumer(BlockingQueue<String> queue) {this.blockingQueue = queue; }
+    public Consumer(BufferedImage[] imgs) {this.imgs = imgs; }
 
     @Override
-    protected String compute() {
+    public String get() {
         try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
+            processing(imgs);
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
 //        try {
@@ -33,5 +37,14 @@ public class Consumer extends RecursiveTask<String> {
 //            e.printStackTrace();
 //        }
         return "0";
+    }
+
+    private void processing(BufferedImage[] imgs) throws IOException, InterruptedException {
+        for (int i = 0; i < imgs.length; i++)
+        {
+            File outputFile = new File("img" + Thread.currentThread().getName() + "-" + i + ".jpg");
+            ImageIO.write(imgs[i], "jpg", outputFile);
+            Thread.sleep(1000);
+        }
     }
 }

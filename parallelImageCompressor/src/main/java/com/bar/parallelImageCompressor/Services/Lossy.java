@@ -9,67 +9,69 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.*;
 
 @Component
 public class Lossy {
+    static Collection<Producer> taskss = new ArrayList<>();
+    static int imagesForSubtask = 1;
+
+    public static int name = 0;
     public static void Start() throws IOException {
         int coresToUse = Runtime.getRuntime().availableProcessors() - 1;
         ForkJoinPool pool = new ForkJoinPool(coresToUse);
 
         BufferedImage[] imgs = processIntoChunks();
-        int threshold = (int)Math.ceil(Double.parseDouble(String.valueOf(imgs.length)) / Double.parseDouble(String.valueOf(coresToUse)));
-        Producer tasks = new Producer(imgs, threshold);
 
-        compressImages(pool, tasks);
+        int border = (int)Math.ceil(Double.parseDouble(String.valueOf(imgs.length)) / Double.parseDouble(String.valueOf(coresToUse)));
+
+        createTasks(imgs, border);
+
+        compressImages(pool);
 
         pool.shutdown();
-//        BlockingQueue<String> blockingQueue = new ArrayBlockingQueue<>(threadPool.getPoolSize());
-
-//        Producer producer = new Producer(blockingQueue);
-//        Consumer consumer1 = new Consumer(blockingQueue);
-//        Consumer consumer2 = new Consumer(blockingQueue);
-
-//        Thread producerThread = new Thread(producer);
-//        CompletableFuture<String> processImage1 = CompletableFuture.supplyAsync(consumer1);
-//        CompletableFuture<String> processImage2 = CompletableFuture.supplyAsync(consumer2);
-
-//        ExecutorService executor = Executors.newWorkStealingPool();
-        ////        Future<String> consumerThread1 = executor.submit(consumer1);
-////        Future<String> consumerThread2 = executor.submit(consumer2);
-//        List<Callable<String>> callables = new ArrayList<>();
-//        callables.add(consumer1);
-//        callables.add(consumer2);
-
-//        executor.invokeAll(callables)
-//                .stream()
-//                .map(future -> {
-//                    try {
-//                        return future.get();
-//                    }
-//                    catch (Exception e) {
-//                        throw new IllegalStateException(e);
-//                    }
-//                })
-//                .forEach(System.out::println);
-
-//        producerThread.start();
-
     }
 
-    private static void compressImages(ForkJoinPool pool, Producer tasks) {
-        Future<Void> res = pool.submit(tasks);
+    private static void createTasks(BufferedImage[] imgs, int border) {
+        if (imgs.length > border) {
+            createTasks(Arrays.copyOfRange(imgs, border, imgs.length), border);
+        }
+        if (border > imgs.length) {
+            taskss.add(new Producer(Arrays.copyOfRange(imgs, 0, imgs.length), imagesForSubtask));
+            return;
+        }
+
+        taskss.add(new Producer(Arrays.copyOfRange(imgs, 0, border), imagesForSubtask));
+    }
+
+    private static void compressImages(ForkJoinPool pool) {
         System.out.println("Processing...");
         try {
-            res.get(60, TimeUnit.SECONDS);
-        } catch (InterruptedException | TimeoutException e) {
-            res.cancel(true);
-        } catch (ExecutionException e) {
+            List<Future<Void>> futures = new ArrayList<>();
+            for (Producer p : taskss) {
+                futures.add(pool.submit(p));
+            }
+            System.out.println("Started all tasks");
+            for (Future<Void> future : futures) {
+                future.get(60, TimeUnit.SECONDS);
+            }
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        } catch (RejectedExecutionException e) {
+            e.printStackTrace();
             if (e.getCause() == null)
                 throw new AssertionError();
             throw new AssertionError(e.getCause());
+        } catch (ExecutionException | InterruptedException | TimeoutException e) {
+            throw new RuntimeException(e);
+        } finally {
+            pool.shutdown();
         }
-        System.out.println("Sub-images have been created.");
+        System.out.println("Sub-images created.");
     }
 
     static BufferedImage[] processIntoChunks() throws IOException {
