@@ -2,6 +2,7 @@ package com.bar.parallelImageCompressor.Services;
 
 import com.bar.parallelImageCompressor.Classes.Producer;
 import com.bar.parallelImageCompressor.Classes.SubImage;
+import com.bar.parallelImageCompressor.Controllers.Compressor;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
@@ -11,20 +12,21 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.time.Instant;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
 
+import static com.bar.parallelImageCompressor.Controllers.Compressor.nameNumber;
+
 @Component
-public class Lossy {
+public class Lossy implements Runnable {
 
     public static BufferedImage compressedImage;
     static Collection<Producer> taskss = new ArrayList<>();
     static int imagesForSubtask = 1;
 
-    public static void Start() throws IOException {
+    public static Boolean Start() throws IOException {
         int coresToUse = Runtime.getRuntime().availableProcessors() - 1;
         ForkJoinPool pool = new ForkJoinPool(coresToUse);
 
@@ -41,10 +43,11 @@ public class Lossy {
         System.out.println("Compressed image saved");
 
         pool.shutdown();
+        return true;
     }
 
     private static void saveImage() throws IOException {
-        File outputFile = new File("img" + ".jpg");
+        File outputFile = new File("img" + nameNumber.getAndAdd(1) + ".jpg");
         ImageIO.write(compressedImage, "jpg", outputFile);
     }
 
@@ -88,7 +91,7 @@ public class Lossy {
     static SubImage[] processIntoChunks() throws IOException {
         System.setProperty("http.agent", "Chrome");
 
-        URL url = new URL("https://www.educative.io/api/edpresso/shot/5120209133764608/image/5075298506244096/test.jpg");
+        URL url = new URL(Objects.requireNonNull(Compressor.urlQueue.pollFirst()));
         InputStream is = url.openStream();
         BufferedImage image = ImageIO.read(is);
         compressedImage = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
@@ -134,5 +137,14 @@ public class Lossy {
         }
 
         return imgs;
+    }
+
+    @Override
+    public void run() {
+        try {
+            Start();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
