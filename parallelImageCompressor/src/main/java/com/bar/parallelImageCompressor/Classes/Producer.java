@@ -2,6 +2,7 @@ package com.bar.parallelImageCompressor.Classes;
 
 import com.bar.parallelImageCompressor.Services.Lossy;
 
+import java.awt.*;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,10 +15,10 @@ import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
 public class Producer extends RecursiveAction {
-    BufferedImage[] imgs;
+    SubImage[] imgs;
     int threshold;
 
-    public Producer(BufferedImage[] imgs, int threshold) {
+    public Producer(SubImage[] imgs, int threshold) {
         this.imgs = imgs;
         this.threshold = threshold;
     }
@@ -28,7 +29,9 @@ public class Producer extends RecursiveAction {
             ForkJoinTask.invokeAll(createSubtasks());
         } else {
             try {
-                processing(imgs);
+                synchronized (this) {
+                    processing(imgs);
+                }
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
@@ -36,12 +39,13 @@ public class Producer extends RecursiveAction {
         }
     }
 
-    private void processing(BufferedImage[] imgs) throws IOException, InterruptedException {
+    private void processing(SubImage[] imgs) throws IOException, InterruptedException {
         for (int i = 0; i < imgs.length; i++)
         {
-            File outputFile = new File("img" + Instant.now().getEpochSecond() + Thread.currentThread().getName() + "-" + Lossy.name + ".jpg");
-            ImageIO.write(imgs[i], "jpg", outputFile);
-            Lossy.name++;
+            Graphics2D writeToImage = Lossy.compressedImage.createGraphics();
+            writeToImage.drawImage(imgs[i].getImage(), imgs[i].getSrc_first_x(), imgs[i].getSrc_first_y(),
+                    imgs[i].getSrc_second_x(), imgs[i].getSrc_second_y(), 0, 0, imgs[i].getImage().getWidth(),
+                    imgs[i].getImage().getHeight(), null);
         }
     }
     private Collection<Producer> createSubtasks() {
