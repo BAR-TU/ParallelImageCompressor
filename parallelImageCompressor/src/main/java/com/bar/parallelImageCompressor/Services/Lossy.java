@@ -34,7 +34,7 @@ public class Lossy implements Runnable {
         int coresToUse = Runtime.getRuntime().availableProcessors() - 1;
         ForkJoinPool pool = new ForkJoinPool(coresToUse);
 
-        SubImage[] imgs = processIntoChunks();
+        SubImage[] imgs = processIntoChunks(coresToUse);
         System.out.println("Sub-images created");
 
         int border = (int)Math.ceil(Double.parseDouble(String.valueOf(imgs.length)) / Double.parseDouble(String.valueOf(coresToUse)));
@@ -92,35 +92,47 @@ public class Lossy implements Runnable {
         }
     }
 
-    SubImage[] processIntoChunks() throws IOException {
+    SubImage[] processIntoChunks(int cores) throws IOException {
         System.setProperty("http.agent", "Chrome");
 
         URL url = new URL(Objects.requireNonNull(Compressor.urlQueue.poll()));
         InputStream is = url.openStream();
         BufferedImage image = ImageIO.read(is);
         compressedImage = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
-
-        int rows = 4;
-        int columns = 4;
-        while ((image.getHeight() / rows) > 100 || (image.getHeight() / columns) > 100) {
-            rows *= 2;
-            columns *= 2;
+        
+        int numOfChunks;
+        for (int i = 1; ;i++) {
+            double currPower = Math.pow(4.0, Double.parseDouble(String.valueOf(i)));
+            if (currPower > cores) {
+                double prevPower = Math.pow(4.0, Double.parseDouble(String.valueOf(i - 1)));
+                numOfChunks = Integer.parseInt(String.valueOf(Math.round(currPower)));
+                break;
+            }
         }
+        
+//        int rows = 4;
+//        int columns = 4;
+//        while ((image.getHeight() / rows) > 100 || (image.getHeight() / columns) > 100) {
+//            rows *= 2;
+//            columns *= 2;
+//        }
 
-        SubImage[] imgs = new SubImage[rows * columns];
+        SubImage[] imgs = new SubImage[numOfChunks];
 
-        return divideToSubImages(image, imgs, rows, columns);
+        return divideToSubImages(image, imgs);
     }
 
-    private SubImage[] divideToSubImages(BufferedImage image, SubImage[] imgs, int rows, int columns) {
-        int subimage_Width = image.getWidth() / columns;
-        int subimage_Height = image.getHeight() / rows;
+    private SubImage[] divideToSubImages(BufferedImage image, SubImage[] imgs) {
+        int lengthSqrt = Integer.parseInt(String.valueOf(Math.round(Math.sqrt(Double.parseDouble(String.valueOf(imgs.length))))));
+        int subimage_Width = image.getWidth() / lengthSqrt;
+        int subimage_Height = image.getHeight() / lengthSqrt;
 
         int current_img = 0;
 
-        for (int i = 0; i < rows; i++)
+
+        for (int i = 0; i < lengthSqrt; i++)
         {
-            for (int j = 0; j < columns; j++)
+            for (int j = 0; j < lengthSqrt; j++)
             {
 
                 BufferedImage img = new BufferedImage(subimage_Width, subimage_Height, image.getType());

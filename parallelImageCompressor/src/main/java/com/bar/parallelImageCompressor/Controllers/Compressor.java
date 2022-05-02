@@ -37,8 +37,8 @@ public class Compressor {
 
     @GetMapping
     public void startCompression() throws InterruptedException, IOException, ExecutionException {
-        urlQueue.add("https://www.educative.io/api/edpresso/shot/5120209133764608/image/5075298506244096/test.jpg");
         urlQueue.add("https://s1.cdn.autoevolution.com/images/news/transformed-bmw-e92-335i-sounds-good-video-57366_1.png");
+        urlQueue.add("https://www.educative.io/api/edpresso/shot/5120209133764608/image/5075298506244096/test.jpg");
         CompletableFuture<Void> future1 = CompletableFuture.runAsync(new Lossy());
         CompletableFuture<Void> future2 = CompletableFuture.runAsync(new Lossy());
         Collection<CompletableFuture<Void>> worker = new ArrayList<>();
