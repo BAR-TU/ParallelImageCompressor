@@ -1,25 +1,62 @@
 package com.bar.parallelImageCompressor.Classes;
 
-import java.util.concurrent.BlockingQueue;
+import com.bar.parallelImageCompressor.Services.Lossy;
 
-public class Producer implements Runnable {
-    BlockingQueue<String> blockingQueue = null;
+import java.awt.*;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.RecursiveAction;
 
-    public Producer(BlockingQueue<String> queue) { this.blockingQueue = queue; }
+public class Producer extends RecursiveAction {
+    SubImage[] imgs;
+    int threshold;
+
+    BufferedImage compressedImage;
+
+    public Producer(SubImage[] imgs, int threshold, BufferedImage compressedImage) {
+        this.imgs = imgs;
+        this.threshold = threshold;
+        this.compressedImage = compressedImage;
+    }
 
     @Override
-    public void run() {
-        for(int i = 0; i < 1000; i++) {
+    protected void compute() {
+        if (imgs.length > threshold) {
+            ForkJoinTask.invokeAll(createSubtasks());
+        } else {
             try {
-                this.blockingQueue.put(String.valueOf(i));
-            } catch (InterruptedException e) {
+                synchronized (this) {
+                    processing(imgs);
+                }
+            } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
+                throw new RuntimeException(e);
             }
         }
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    }
+
+    private void processing(SubImage[] imgs) throws IOException, InterruptedException {
+        for (int i = 0; i < imgs.length; i++)
+        {
+            Graphics2D writeToImage = compressedImage.createGraphics();
+            writeToImage.drawImage(imgs[i].getImage(), imgs[i].getSrc_first_x(), imgs[i].getSrc_first_y(),
+                    imgs[i].getSrc_second_x(), imgs[i].getSrc_second_y(), 0, 0, imgs[i].getImage().getWidth(),
+                    imgs[i].getImage().getHeight(), null);
+//            Thread.sleep(1000);
         }
+    }
+    private Collection<Producer> createSubtasks() {
+        List<Producer> dividedTasks = new ArrayList<>();
+        dividedTasks.add(new Producer(Arrays.copyOfRange(imgs, 0, threshold), threshold, compressedImage));
+        dividedTasks.add(new Producer(
+                Arrays.copyOfRange(imgs, threshold, imgs.length), threshold, compressedImage));
+        return dividedTasks;
     }
 }
