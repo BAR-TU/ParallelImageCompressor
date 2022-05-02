@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,7 +31,7 @@ public class Compressor {
     @Autowired
     Lossy lossyService;
 
-    public static ConcurrentLinkedDeque<String> urlQueue = new ConcurrentLinkedDeque<>();
+    public static ConcurrentLinkedQueue<String> urlQueue = new ConcurrentLinkedQueue<>();
 
     public static AtomicInteger nameNumber = new AtomicInteger();
 
@@ -43,9 +44,10 @@ public class Compressor {
         Collection<CompletableFuture<Void>> worker = new ArrayList<>();
         worker.add(future1);
         worker.add(future2);
-        //        CompletableFuture<Void> allFutures = future1.thenCompose(f -> future2);
-        //        allFutures.get();
-        //        System.out.println("Exiting...");
+//        CompletableFuture.supplyAsync(() -> "").thenCompose(f -> future1).thenCompose(f -> future2);
+//                CompletableFuture<Void> allFutures = future1.thenCompose(f -> future2);
+//                allFutures.get();
+//                System.out.println("Exiting...");
 
         CompletableFuture<Void> allFutures = CompletableFuture.allOf(worker.toArray(new CompletableFuture[worker.size()]));
         allFutures.get();

@@ -22,11 +22,15 @@ import static com.bar.parallelImageCompressor.Controllers.Compressor.nameNumber;
 @Component
 public class Lossy implements Runnable {
 
-    public static BufferedImage compressedImage;
+    public BufferedImage compressedImage;
     static Collection<Producer> taskss = new ArrayList<>();
     static int imagesForSubtask = 1;
 
-    public static Boolean Start() throws IOException {
+    public Lossy() {
+
+    }
+
+    public  Boolean Start() throws IOException {
         int coresToUse = Runtime.getRuntime().availableProcessors() - 1;
         ForkJoinPool pool = new ForkJoinPool(coresToUse);
 
@@ -46,24 +50,24 @@ public class Lossy implements Runnable {
         return true;
     }
 
-    private static void saveImage() throws IOException {
+    private void saveImage() throws IOException {
         File outputFile = new File("img" + nameNumber.getAndAdd(1) + ".jpg");
         ImageIO.write(compressedImage, "jpg", outputFile);
     }
 
-    private static void createTasks(SubImage[] imgs, int border) {
+    private void createTasks(SubImage[] imgs, int border) {
         if (imgs.length > border) {
             createTasks(Arrays.copyOfRange(imgs, border, imgs.length), border);
         }
         if (border > imgs.length) {
-            taskss.add(new Producer(Arrays.copyOfRange(imgs, 0, imgs.length), imagesForSubtask));
+            taskss.add(new Producer(Arrays.copyOfRange(imgs, 0, imgs.length), imagesForSubtask, compressedImage));
             return;
         }
 
-        taskss.add(new Producer(Arrays.copyOfRange(imgs, 0, border), imagesForSubtask));
+        taskss.add(new Producer(Arrays.copyOfRange(imgs, 0, border), imagesForSubtask, compressedImage));
     }
 
-    private static void compressImages(ForkJoinPool pool) {
+    private void compressImages(ForkJoinPool pool) {
         System.out.println("Compressing...");
         try {
             List<Future<Void>> futures = new ArrayList<>();
@@ -88,10 +92,10 @@ public class Lossy implements Runnable {
         }
     }
 
-    static SubImage[] processIntoChunks() throws IOException {
+    SubImage[] processIntoChunks() throws IOException {
         System.setProperty("http.agent", "Chrome");
 
-        URL url = new URL(Objects.requireNonNull(Compressor.urlQueue.pollFirst()));
+        URL url = new URL(Objects.requireNonNull(Compressor.urlQueue.poll()));
         InputStream is = url.openStream();
         BufferedImage image = ImageIO.read(is);
         compressedImage = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
@@ -108,7 +112,7 @@ public class Lossy implements Runnable {
         return divideToSubImages(image, imgs, rows, columns);
     }
 
-    private static SubImage[] divideToSubImages(BufferedImage image, SubImage[] imgs, int rows, int columns) {
+    private SubImage[] divideToSubImages(BufferedImage image, SubImage[] imgs, int rows, int columns) {
         int subimage_Width = image.getWidth() / columns;
         int subimage_Height = image.getHeight() / rows;
 

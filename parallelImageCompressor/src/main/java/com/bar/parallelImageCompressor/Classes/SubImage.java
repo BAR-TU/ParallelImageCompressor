@@ -8,7 +8,6 @@ public class SubImage {
    private int src_first_y;
    private int src_second_x;
    private int src_second_y;
-
    BufferedImage image;
 
     public SubImage(int src_first_x, int src_first_y, int src_second_x, int src_second_y, BufferedImage image) {
