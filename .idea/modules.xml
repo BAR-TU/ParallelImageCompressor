@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/ParallelImageCompressor.iml" filepath="$PROJECT_DIR$/.idea/ParallelImageCompressor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/parallelImageCompressor/parallelImageCompressor.iml" filepath="$PROJECT_DIR$/parallelImageCompressor/parallelImageCompressor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/react/react.iml" filepath="$PROJECT_DIR$/react/react.iml" />
+    </modules>
+  </component>
+</project>
