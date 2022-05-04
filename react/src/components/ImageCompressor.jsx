@@ -11,8 +11,32 @@ class imageCompressor extends React.Component {
       originalImage: "",
       originalLink: "",
       clicked: false,
-      uploadImage: false
+      uploadImage: false,
+      file: [null]
     };
+    this.uploadMultipleFiles = this.uploadMultipleFiles.bind(this)
+    this.uploadFiles = this.uploadFiles.bind(this)
+  }
+
+  fileObj = [];
+  fileArray = [];
+
+  uploadMultipleFiles(e) {
+    this.fileObj.push(e.target.files)
+    for (let i = 0; i < this.fileObj[0].length; i++) {
+      this.fileArray.push(URL.createObjectURL(this.fileObj[0][i]))
+    }
+    const imageFile = e.target.files[0];
+    this.setState({ file: this.fileArray,
+      originalLink: URL.createObjectURL(imageFile),
+      originalImage: imageFile,
+      outputFileName: imageFile.name,
+      uploadImage: true})
+  }
+
+  uploadFiles(e) {
+    e.preventDefault()
+    console.log(this.state.file)
   }
 
   handle = e => {
@@ -69,7 +93,7 @@ class imageCompressor extends React.Component {
           <div className="col-xl-4 col-lg-4 col-md-12 col-sm-12">
             {this.state.uploadImage ? (
               <Card.Img
-                className="ht"
+                  className="ht"
                 variant="top"
                 src={this.state.originalLink}
               ></Card.Img>
@@ -84,11 +108,20 @@ class imageCompressor extends React.Component {
               <input
                 type="file"
                 accept="image/*"
-                className="mt-2 btn btn-dark w-75"
-                onChange={e => this.handle(e)}
+                className="form-control mt-2 btn btn-dark w-75"
+                onChange={this.uploadMultipleFiles} multiple
               />
             </div>
+            <h4 className="mt-20">Compression options:</h4>
+            Select compression quality:
+            <select className="form-select form-select-lg">
+              <option>Retain picture quality</option>
+              <option value="soft">Soft</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
           </div>
+
           <div className="col-xl-4 col-lg-4 col-md-12 mb-5 mt-5 col-sm-12 d-flex justify-content-center align-items-baseline">
             <br />
             {this.state.outputFileName ? (
