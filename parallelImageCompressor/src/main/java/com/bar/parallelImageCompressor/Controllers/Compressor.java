@@ -12,6 +12,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
+import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +31,7 @@ public class Compressor {
     @Autowired
     Parallelization parallelizationService;
 
-    public static ConcurrentLinkedQueue<String> urlQueue = new ConcurrentLinkedQueue<>();
+    public static ConcurrentLinkedQueue<String> imagesToProcessQueue = new ConcurrentLinkedQueue<>();
 
     public static AtomicInteger nameNumber = new AtomicInteger();
 
@@ -41,6 +42,34 @@ public class Compressor {
         //saveImagesMethod in ImageUtils
 
         System.out.println("Exiting...");
+    }
+
+    @GetMapping("/lossless")
+    public void startCompressionLossless() throws InterruptedException, IOException, ExecutionException {
+        parallelCompression("lossless");
+
+        //saveImagesMethod in ImageUtils
+
+        System.out.println("Exiting...");
+    }
+
+    public void parallelCompression(String flag) throws InterruptedException, IOException, ExecutionException {
+        if ("lossy".equals(flag)) {
+            imagesToProcessQueue.add("https://s1.cdn.autoevolution.com/images/news/transformed-bmw-e92-335i-sounds-good-video-57366_1.png");
+            imagesToProcessQueue.add("https://www.educative.io/api/edpresso/shot/5120209133764608/image/5075298506244096/test.jpg");
+            CompletableFuture<Void> future1 = CompletableFuture.runAsync(new Parallelization());
+            CompletableFuture<Void> future2 = CompletableFuture.runAsync(new Parallelization());
+            Collection<CompletableFuture<Void>> worker = new ArrayList<>();
+            worker.add(future1);
+            worker.add(future2);
+
+            CompletableFuture<Void> allFutures = CompletableFuture.allOf(worker.toArray(new CompletableFuture[worker.size()]));
+            allFutures.get();
+
+
+        } else if ("lossless".equals(flag)) {
+//            ...
+        }
     }
 
     public static void  compressJpegImage(File originalImage, File compressedImage, float compressionQuality) throws IOException {

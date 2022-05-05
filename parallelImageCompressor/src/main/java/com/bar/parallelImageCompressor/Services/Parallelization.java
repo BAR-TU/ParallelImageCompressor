@@ -29,7 +29,7 @@ public class Parallelization implements Runnable {
 
     }
 
-    public  Boolean Start() throws IOException {
+    public void Start() throws IOException {
         int coresToUse = Runtime.getRuntime().availableProcessors() - 1;
         ForkJoinPool pool = new ForkJoinPool(coresToUse);
 
@@ -99,14 +99,20 @@ public class Parallelization implements Runnable {
         long numOfChunks;
         for (int i = 1; ;i++) {
             double currPower = Math.pow(4.0, Double.parseDouble(String.valueOf(i)));
-            if (currPower > cores) {
+            if(currPower > cores) {
                 double prevPower = Math.pow(4.0, Double.parseDouble(String.valueOf(i - 1)));
-                numOfChunks = Integer.parseInt(String.valueOf(Math.round(currPower)));
+                long prevPowerDiff = Math.round(Double.valueOf(cores) - prevPower);
+                long currPowerDiff = Math.round(currPower - Double.valueOf(cores));
+                if (prevPowerDiff > currPowerDiff) {
+                    numOfChunks = Math.round(currPower);
+                    break;
+                }
+                numOfChunks = Math.round(prevPowerDiff);
                 break;
             }
         }
 
-        SubImage[] imgs = new SubImage[numOfChunks];
+        SubImage[] imgs = new SubImage[Integer.parseInt(String.valueOf(numOfChunks))];
 
         return divideToSubImages(image, imgs);
     }
