@@ -1,14 +1,10 @@
 package com.bar.parallelImageCompressor.Classes;
 
-import com.bar.parallelImageCompressor.Services.Lossy;
-
 import java.awt.*;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.concurrent.ForkJoinTask;
@@ -45,6 +41,7 @@ public class Producer extends RecursiveAction {
     private void processing(SubImage[] imgs) throws IOException, InterruptedException {
         for (int i = 0; i < imgs.length; i++)
         {
+
             Graphics2D writeToImage = compressedImage.createGraphics();
             writeToImage.drawImage(imgs[i].getImage(), imgs[i].getSrc_first_x(), imgs[i].getSrc_first_y(),
                     imgs[i].getSrc_second_x(), imgs[i].getSrc_second_y(), 0, 0, imgs[i].getImage().getWidth(),

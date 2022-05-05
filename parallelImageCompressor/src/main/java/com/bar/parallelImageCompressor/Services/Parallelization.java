@@ -12,21 +12,20 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.time.Instant;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static com.bar.parallelImageCompressor.Controllers.Compressor.nameNumber;
 
 @Component
-public class Lossy implements Runnable {
+public class Parallelization implements Runnable {
 
     public BufferedImage compressedImage;
     static Collection<Producer> taskss = new ArrayList<>();
     static int imagesForSubtask = 1;
 
-    public Lossy() {
+    public Parallelization() {
 
     }
 
@@ -45,9 +44,6 @@ public class Lossy implements Runnable {
 
         saveImage();
         System.out.println("Compressed image saved");
-
-        pool.shutdown();
-        return true;
     }
 
     private void saveImage() throws IOException {
@@ -95,12 +91,12 @@ public class Lossy implements Runnable {
     SubImage[] processIntoChunks(int cores) throws IOException {
         System.setProperty("http.agent", "Chrome");
 
-        URL url = new URL(Objects.requireNonNull(Compressor.urlQueue.poll()));
+        URL url = new URL(Objects.requireNonNull(Compressor.imagesToProcessQueue.poll()));
         InputStream is = url.openStream();
         BufferedImage image = ImageIO.read(is);
         compressedImage = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
-        
-        int numOfChunks;
+
+        long numOfChunks;
         for (int i = 1; ;i++) {
             double currPower = Math.pow(4.0, Double.parseDouble(String.valueOf(i)));
             if (currPower > cores) {
@@ -109,13 +105,6 @@ public class Lossy implements Runnable {
                 break;
             }
         }
-        
-//        int rows = 4;
-//        int columns = 4;
-//        while ((image.getHeight() / rows) > 100 || (image.getHeight() / columns) > 100) {
-//            rows *= 2;
-//            columns *= 2;
-//        }
 
         SubImage[] imgs = new SubImage[numOfChunks];
 
