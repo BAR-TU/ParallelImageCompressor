@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.bar.parallelImageCompressor.Controllers.Compressor.nameNumber;
+import static com.bar.parallelImageCompressor.Controllers.Compressor.finalImgNameNumber;
 
 @Component
 public class Parallelization implements Runnable {
@@ -47,7 +47,7 @@ public class Parallelization implements Runnable {
     }
 
     private void saveImage() throws IOException {
-        File outputFile = new File("img" + nameNumber.getAndAdd(1) + ".jpg");
+        File outputFile = new File("img" + finalImgNameNumber.getAndAdd(1) + ".jpg");
         ImageIO.write(compressedImage, "jpg", outputFile);
     }
 
@@ -107,7 +107,7 @@ public class Parallelization implements Runnable {
                     numOfChunks = Math.round(currPower);
                     break;
                 }
-                numOfChunks = Math.round(prevPowerDiff);
+                numOfChunks = Math.round(prevPower);
                 break;
             }
         }
@@ -115,6 +115,37 @@ public class Parallelization implements Runnable {
         SubImage[] imgs = new SubImage[Integer.parseInt(String.valueOf(numOfChunks))];
 
         return divideToSubImages(image, imgs);
+    }
+
+    private BufferedImage checkForSize(BufferedImage image) {
+        int correctWidth = 0;
+        int correctHeight = 0;
+        if (image.getWidth() % 8 != 0) {
+            for (int k = image.getWidth() + 1; ; k++) {
+                if (k % 8 == 0) {
+                    correctWidth = k;
+                    break;
+                }
+            }
+        }
+        if (image.getHeight() % 8 != 0) {
+            for (int k = image.getHeight() + 1; ; k++) {
+                if (k % 8 == 0) {
+                    correctHeight = k;
+                    break;
+                }
+            }
+        }
+
+        if (correctHeight != 0 || correctWidth != 0) {
+            BufferedImage resized = new BufferedImage(correctWidth, correctHeight, image.getType());
+            Graphics2D graphics = resized.createGraphics();
+            graphics.drawImage(image, 0, 0, correctWidth, correctHeight, null);
+            graphics.dispose();
+            return resized;
+        }
+
+        return image;
     }
 
     private SubImage[] divideToSubImages(BufferedImage image, SubImage[] imgs) {
@@ -129,21 +160,22 @@ public class Parallelization implements Runnable {
         {
             for (int j = 0; j < lengthSqrt; j++)
             {
-
                 BufferedImage img = new BufferedImage(subimage_Width, subimage_Height, image.getType());
+                img = checkForSize(img);
 
                 Graphics2D img_creator = img.createGraphics();
 
-                int src_first_x = subimage_Width * j;
-                int src_first_y = subimage_Height * i;
+                int src_first_x = img.getWidth() * j;
+                int src_first_y = img.getHeight() * i;
 
-                int src_second_x = subimage_Width * j + subimage_Width;
-                int src_second_y = subimage_Height * i + subimage_Height;
+                int src_second_x = img.getWidth() * j + img.getWidth();
+                int src_second_y = img.getHeight() * i + img.getHeight();
 
-                img_creator.drawImage(image, 0, 0, subimage_Width, subimage_Height, src_first_x, src_first_y, src_second_x, src_second_y, null);
+                img_creator.drawImage(image, 0, 0, img.getWidth(), img.getHeight(), src_first_x, src_first_y, src_second_x, src_second_y, null);
 
                 imgs[current_img] = new SubImage(src_first_x, src_first_y, src_second_x, src_second_y, img);
                 current_img++;
+                img_creator.dispose();
             }
         }
 
