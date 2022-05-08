@@ -12,7 +12,6 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
-import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +32,8 @@ public class Compressor {
 
     public static ConcurrentLinkedQueue<String> imagesToProcessQueue = new ConcurrentLinkedQueue<>();
 
-    public static AtomicInteger nameNumber = new AtomicInteger();
+    public static AtomicInteger finalImgNameNumber = new AtomicInteger();
+    public static AtomicInteger subImgsNameNumber = new AtomicInteger();
 
     @GetMapping("/lossy")
     public void startCompressionLossy() throws InterruptedException, IOException, ExecutionException {
@@ -55,6 +55,7 @@ public class Compressor {
 
     public void parallelCompression(String flag) throws InterruptedException, IOException, ExecutionException {
         if ("lossy".equals(flag)) {
+//            TODO: array -> BMP to disk -> MultipartFile / ImageStream
             imagesToProcessQueue.add("https://s1.cdn.autoevolution.com/images/news/transformed-bmw-e92-335i-sounds-good-video-57366_1.png");
             imagesToProcessQueue.add("https://www.educative.io/api/edpresso/shot/5120209133764608/image/5075298506244096/test.jpg");
             CompletableFuture<Void> future1 = CompletableFuture.runAsync(new Parallelization());
