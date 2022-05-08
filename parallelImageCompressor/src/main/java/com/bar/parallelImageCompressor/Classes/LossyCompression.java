@@ -25,7 +25,7 @@ import java.util.List;
 import java.awt.*;
 import java.util.concurrent.Callable;
 
-public class HelloApplication implements Callable<BufferedImage> {
+public class LossyCompression implements Callable<BufferedImage> {
     private FileInputStream inputStream;
     private byte[] data;
     //    private Graph beforeCompressGraph = new Graph();
@@ -63,7 +63,7 @@ public class HelloApplication implements Callable<BufferedImage> {
 ////        primaryStage.show();
 //    }
 
-    public HelloApplication(BufferedImage image) {
+    public LossyCompression(BufferedImage image) {
         this.imageToConvert = image;
     }
 

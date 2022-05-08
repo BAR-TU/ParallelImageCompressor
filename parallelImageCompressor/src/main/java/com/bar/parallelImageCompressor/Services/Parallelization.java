@@ -24,6 +24,11 @@ public class Parallelization implements Runnable {
     public BufferedImage compressedImage;
     static Collection<Producer> taskss = new ArrayList<>();
     static int imagesForSubtask = 1;
+    public String flag;
+
+    public Parallelization(String flag) {
+        this.flag = flag;
+    }
 
     public Parallelization() {
 
@@ -56,11 +61,11 @@ public class Parallelization implements Runnable {
             createTasks(Arrays.copyOfRange(imgs, border, imgs.length), border);
         }
         if (border > imgs.length) {
-            taskss.add(new Producer(Arrays.copyOfRange(imgs, 0, imgs.length), imagesForSubtask, compressedImage));
+            taskss.add(new Producer(Arrays.copyOfRange(imgs, 0, imgs.length), imagesForSubtask, compressedImage, flag));
             return;
         }
 
-        taskss.add(new Producer(Arrays.copyOfRange(imgs, 0, border), imagesForSubtask, compressedImage));
+        taskss.add(new Producer(Arrays.copyOfRange(imgs, 0, border), imagesForSubtask, compressedImage, flag));
     }
 
     private void compressImages(ForkJoinPool pool) {
@@ -72,7 +77,7 @@ public class Parallelization implements Runnable {
             }
             System.out.println("Started all tasks");
             for (Future<Void> future : futures) {
-                future.get(60, TimeUnit.SECONDS);
+                future.get(500, TimeUnit.SECONDS);
             }
         } catch (NullPointerException e) {
             e.printStackTrace();

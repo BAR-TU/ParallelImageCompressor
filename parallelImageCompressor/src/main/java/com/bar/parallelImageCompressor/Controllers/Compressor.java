@@ -54,23 +54,19 @@ public class Compressor {
     }
 
     public void parallelCompression(String flag) throws InterruptedException, IOException, ExecutionException {
-        if ("lossy".equals(flag)) {
 //            TODO: array -> BMP to disk -> MultipartFile / ImageStream
-            imagesToProcessQueue.add("https://s1.cdn.autoevolution.com/images/news/transformed-bmw-e92-335i-sounds-good-video-57366_1.png");
-            imagesToProcessQueue.add("https://www.educative.io/api/edpresso/shot/5120209133764608/image/5075298506244096/test.jpg");
-            CompletableFuture<Void> future1 = CompletableFuture.runAsync(new Parallelization());
-            CompletableFuture<Void> future2 = CompletableFuture.runAsync(new Parallelization());
+            //imagesToProcessQueue.add("https://s1.cdn.autoevolution.com/images/news/transformed-bmw-e92-335i-sounds-good-video-57366_1.png");
+            //imagesToProcessQueue.add("https://www.educative.io/api/edpresso/shot/5120209133764608/image/5075298506244096/test.jpg");
+            imagesToProcessQueue.add("https://png.pngitem.com/pimgs/s/509-5099390_check-green-check-list-icon-hd-png-download.png");
+            //imagesToProcessQueue.add("https://www.iconpacks.net/icons/1/free-pin-icon-48-thumb.png");
+            CompletableFuture<Void> future1 = CompletableFuture.runAsync(new Parallelization(flag));
+           // CompletableFuture<Void> future2 = CompletableFuture.runAsync(new Parallelization(flag));
             Collection<CompletableFuture<Void>> worker = new ArrayList<>();
             worker.add(future1);
-            worker.add(future2);
+           // worker.add(future2);
 
             CompletableFuture<Void> allFutures = CompletableFuture.allOf(worker.toArray(new CompletableFuture[worker.size()]));
             allFutures.get();
-
-
-        } else if ("lossless".equals(flag)) {
-//            ...
-        }
     }
 
     public static void  compressJpegImage(File originalImage, File compressedImage, float compressionQuality) throws IOException {
