@@ -1,8 +1,5 @@
 package com.bar.parallelImageCompressor.Classes.HuffmanCoding;
 
-/**
- * @author Hamza Akbar
- */
 public class MinHeap {
     
     public Node[] arr;

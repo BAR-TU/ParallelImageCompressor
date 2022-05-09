@@ -11,8 +11,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
@@ -96,7 +94,6 @@ public class Parallelization implements Runnable {
 
     SubImage[] processIntoChunks(int cores) throws IOException {
         FileInputStream file = new FileInputStream(Objects.requireNonNull(Compressor.imagesToProcessQueue.poll()));
-        //File is = new File(file);
         BufferedImage image = ImageIO.read(file);
         compressedImage = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
 

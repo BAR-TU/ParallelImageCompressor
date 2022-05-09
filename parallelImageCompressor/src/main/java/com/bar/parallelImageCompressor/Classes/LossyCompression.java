@@ -6,14 +6,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.*;
-import javafx.scene.Scene;
-import javafx.scene.image.*;
-import javafx.scene.layout.HBox;
-import javafx.stage.*;
-import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-import org.yaml.snakeyaml.reader.StreamReader;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -28,8 +20,6 @@ import java.util.concurrent.Callable;
 public class LossyCompression implements Callable<BufferedImage> {
     private FileInputStream inputStream;
     private byte[] data;
-    //    private Graph beforeCompressGraph = new Graph();
-//    private Graph afterCompressGraph = new Graph();
     private Graph graph;
     private int stepNumber = 0;
     private int offset;
@@ -46,29 +36,13 @@ public class LossyCompression implements Callable<BufferedImage> {
     private int[][] quantizationTable;
 
     private BufferedImage imageToConvert;
-//    private double[][] compressCg;
-//    private double[][] compressCo;
-//    private double[][] compressBrightness;
-//    private int[][] grayScaleRGB;
-//    private int[][] ditheringMatrix;
-
-//    public static void execute(String args[]) {
-//        Application.launch(args);
-//    }
-
-//    @Override
-//    public void start(Stage primaryStage) throws IOException {
-//
-//
-////        primaryStage.show();
-//    }
 
     public LossyCompression(BufferedImage image) {
         this.imageToConvert = image;
     }
 
         @Override
-        public BufferedImage call() throws Exception {
+        public BufferedImage call() {
         File file = new File("tmpimg" + Compressor.subImgsNameNumber.getAndAdd(1) + ".bmp");
         BufferedImage bim = null;
         try {
@@ -111,27 +85,12 @@ public class LossyCompression implements Callable<BufferedImage> {
 
         lossyEncode();
         lossyDecode();
-
-//        primaryStage.setTitle(".IM3 file");
-//        HBox root = new HBox();
-
-//        root.getChildren().addAll(graph);
-//        Scene scene  = new Scene(root,imageWidth,imageHeight);
-//        primaryStage.setScene(scene);
-
-//        File file1 = new File("CanvasImage.png");
-//
-//        try {
-//            ImageIO.write(SwingFXUtils.fromFXImage(graph.image, null), "png", file1);
-//        } catch (Exception s) {
-//        }
-
         BufferedImage img = SwingFXUtils.fromFXImage(graph.image, null);
 
         return img;
     }
 
-    private void lossyEncode() throws IOException {
+    private void lossyEncode() {
         long startTime = System.nanoTime();
 
         // Original image
@@ -160,7 +119,6 @@ public class LossyCompression implements Callable<BufferedImage> {
                 co[x][imageHeight-y-1] = 0.5*r - 0.5*b;
                 cg[x][imageHeight-y-1] = (-0.25*r) + 0.5*g - 0.25*b;
 
-//                graph.setPixel(x, imageHeight-y-1, color.getRGB());
                 start = start + 3;
             }
         }
@@ -233,11 +191,6 @@ public class LossyCompression implements Callable<BufferedImage> {
         List<Integer> compressedData = new ArrayList<>();
         compressedData.add(imageWidth);
         compressedData.add(imageHeight);
-//        for (int i = 0; i < 8; i++) {
-//            for (int j = 0; j < 8; j++) {
-//                compressedData.add(quantizationTable[i][j]);
-//            }
-//        }
         for (int i = 0; i < imageWidth; i++) {
             if ((i%8) > 2) {
                 continue;
@@ -258,10 +211,6 @@ public class LossyCompression implements Callable<BufferedImage> {
             compressedDataInByte[2 * i] = (byte) (compressedData.get(i) & 0xff);
             compressedDataInByte[2 * i + 1] = (byte) ((compressedData.get(i) >> 8) & 0xff);
         }
-
-
-//        FileOutputStream fileOuputStream = new FileOutputStream("lossyCompression.IM3");
-//        fileOuputStream.write(compressedDataInByte);
 
         long endTime = System.nanoTime();
         long duration = endTime - startTime;
@@ -383,7 +332,6 @@ public class LossyCompression implements Callable<BufferedImage> {
         long endTime = System.nanoTime();
         long duration = endTime - startTime;
         System.out.println("Decode speed:" + " " + duration);
-//        System.out.println("Compress Rate: " + 3.0 * totalPixel / decompressData.length);
         System.out.println("Compress Rate: " + (double)data.length / compressedDataInByte.length);
     }
 

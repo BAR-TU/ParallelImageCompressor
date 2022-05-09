@@ -41,26 +41,6 @@ public class Graph extends ImageView {
         }
     }
 
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public void clear() {
-        createPanel();
-    }
-
     public void setImage(WritableImage image) {
         this.image = image;
     }
