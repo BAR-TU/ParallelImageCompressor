@@ -51,7 +51,7 @@ public class Compressor {
         System.out.println("Exiting...");
     }
 
-    @GetMapping(value="/lossless", consumes = "multipart/form-data")
+    @PostMapping(value="/lossless", consumes = "multipart/form-data")
     public void startCompressionLossless(@RequestParam("images") MultipartFile[] images) throws InterruptedException, ExecutionException {
         saveToDisk(images);
 
@@ -73,10 +73,9 @@ public class Compressor {
 
     private void uploadToLocalFileSystem(@RequestParam("img") MultipartFile img) throws IOException {
         String tmpdir = Files.createTempDirectory("tmp").toFile().getAbsolutePath();
-        String tmpDirsLocation = System.getProperty("java.io.tmpdir");
 
         String fileName = StringUtils.cleanPath(img.getOriginalFilename());
-        Path path = Paths.get(tmpDirsLocation + tmpdir + fileName);
+        Path path = Paths.get( tmpdir + "\\" + fileName);
 
         int extDotIndex = img.getOriginalFilename().lastIndexOf(".");
 
@@ -96,12 +95,12 @@ public class Compressor {
         Collection<CompletableFuture<Void>> worker = new ArrayList<>();
         if ("lossy".equals(flag)) {
             for (int i = 0; i < imagesToProcessQueue.size(); i++) {
-                CompletableFuture<Void> future = CompletableFuture.runAsync(new Parallelization());
+                CompletableFuture<Void> future = CompletableFuture.runAsync(new Parallelization(flag));
                 worker.add(future);
             }
         } else if ("lossless".equals(flag)) {
             for (int i = 0; i < imagesToProcessQueue.size(); i++) {
-                CompletableFuture<Void> future = CompletableFuture.runAsync(new Parallelization());
+                CompletableFuture<Void> future = CompletableFuture.runAsync(new Parallelization(flag));
                 worker.add(future);
             }
         }

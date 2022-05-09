@@ -95,9 +95,9 @@ public class Parallelization implements Runnable {
     }
 
     SubImage[] processIntoChunks(int cores) throws IOException {
-        File file = new File(Objects.requireNonNull(Compressor.imagesToProcessQueue.poll()));
-        InputStream is = new FileInputStream(file);
-        BufferedImage image = ImageIO.read(is);
+        FileInputStream file = new FileInputStream(Objects.requireNonNull(Compressor.imagesToProcessQueue.poll()));
+        //File is = new File(file);
+        BufferedImage image = ImageIO.read(file);
         compressedImage = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
 
         long numOfChunks;
@@ -118,7 +118,7 @@ public class Parallelization implements Runnable {
 
         SubImage[] imgs = new SubImage[Integer.parseInt(String.valueOf(numOfChunks))];
 
-        is.close();
+        file.close();
         return divideToSubImages(image, imgs);
     }
 
