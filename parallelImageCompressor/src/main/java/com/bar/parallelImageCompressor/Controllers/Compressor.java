@@ -2,21 +2,28 @@ package com.bar.parallelImageCompressor.Controllers;
 
 import com.bar.parallelImageCompressor.Services.Parallelization;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
+import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
@@ -35,62 +42,71 @@ public class Compressor {
     public static AtomicInteger finalImgNameNumber = new AtomicInteger();
     public static AtomicInteger subImgsNameNumber = new AtomicInteger();
 
-    @GetMapping("/lossy")
-    public void startCompressionLossy() throws InterruptedException, IOException, ExecutionException {
+    @PostMapping(value="/lossy", consumes = "multipart/form-data")
+    public void startCompressionLossy(@RequestParam("images") MultipartFile[] images) throws InterruptedException, ExecutionException {
+        saveToDisk(images);
+
         parallelCompression("lossy");
 
-        //saveImagesMethod in ImageUtils
-
         System.out.println("Exiting...");
     }
 
-    @GetMapping("/lossless")
-    public void startCompressionLossless() throws InterruptedException, IOException, ExecutionException {
+    @GetMapping(value="/lossless", consumes = "multipart/form-data")
+    public void startCompressionLossless(@RequestParam("images") MultipartFile[] images) throws InterruptedException, ExecutionException {
+        saveToDisk(images);
+
         parallelCompression("lossless");
 
-        //saveImagesMethod in ImageUtils
-
         System.out.println("Exiting...");
     }
 
-    public void parallelCompression(String flag) throws InterruptedException, IOException, ExecutionException {
-//            TODO: array -> BMP to disk -> MultipartFile / ImageStream
-            //imagesToProcessQueue.add("https://s1.cdn.autoevolution.com/images/news/transformed-bmw-e92-335i-sounds-good-video-57366_1.png");
-            //imagesToProcessQueue.add("https://www.educative.io/api/edpresso/shot/5120209133764608/image/5075298506244096/test.jpg");
-            imagesToProcessQueue.add("https://png.pngitem.com/pimgs/s/509-5099390_check-green-check-list-icon-hd-png-download.png");
-            //imagesToProcessQueue.add("https://www.iconpacks.net/icons/1/free-pin-icon-48-thumb.png");
-            CompletableFuture<Void> future1 = CompletableFuture.runAsync(new Parallelization(flag));
-           // CompletableFuture<Void> future2 = CompletableFuture.runAsync(new Parallelization(flag));
-            Collection<CompletableFuture<Void>> worker = new ArrayList<>();
-            worker.add(future1);
-           // worker.add(future2);
-
-            CompletableFuture<Void> allFutures = CompletableFuture.allOf(worker.toArray(new CompletableFuture[worker.size()]));
-            allFutures.get();
+    private void saveToDisk(MultipartFile[] images) {
+        Arrays.stream(images)
+                .forEach(img -> {
+                    try {
+                        uploadToLocalFileSystem(img);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
-    public static void  compressJpegImage(File originalImage, File compressedImage, float compressionQuality) throws IOException {
-        //        File originalImage = new File("C:\\Users\\a.dachkinova\\Desktop\\four.jpg");
-//        File compressedImage = new File("C:\\Users\\a.dachkinova\\Desktop\\compressedImage.jpg");
-//        try {
-//            compressJpegImage(originalImage, compressedImage, 0.7f);
-//            System.out.println("Done!");
-//        }
-//        catch(IOException e){
-//            System.out.println(e.getMessage());
-//        }
-        RenderedImage image = ImageIO.read(originalImage);
-        ImageWriter jpegWriter = ImageIO.getImageWritersByFormatName("jpg").next();
-        ImageWriteParam jpegWriteParam = jpegWriter.getDefaultWriteParam();
-        jpegWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-        jpegWriteParam.setCompressionQuality(compressionQuality);
+    private void uploadToLocalFileSystem(@RequestParam("img") MultipartFile img) throws IOException {
+        String tmpdir = Files.createTempDirectory("tmp").toFile().getAbsolutePath();
+        String tmpDirsLocation = System.getProperty("java.io.tmpdir");
 
-        try(ImageOutputStream outputStream = ImageIO.createImageOutputStream(compressedImage)) {
-            jpegWriter.setOutput(outputStream);
-            IIOImage outputImage = new IIOImage(image, null, null);
-            jpegWriter.write(null, outputImage, jpegWriteParam);
+        String fileName = StringUtils.cleanPath(img.getOriginalFilename());
+        Path path = Paths.get(tmpDirsLocation + tmpdir + fileName);
+
+        int extDotIndex = img.getOriginalFilename().lastIndexOf(".");
+
+        String type = img.getOriginalFilename().substring(extDotIndex + 1);
+
+        try {
+            if ("png".equals(type) || "jpeg".equals(type) || "jpg".equals(type)) {
+                Files.copy(img.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+                imagesToProcessQueue.add(path.toAbsolutePath().toString());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void parallelCompression(String flag) throws InterruptedException, ExecutionException {
+        Collection<CompletableFuture<Void>> worker = new ArrayList<>();
+        if ("lossy".equals(flag)) {
+            for (int i = 0; i < imagesToProcessQueue.size(); i++) {
+                CompletableFuture<Void> future = CompletableFuture.runAsync(new Parallelization());
+                worker.add(future);
+            }
+        } else if ("lossless".equals(flag)) {
+            for (int i = 0; i < imagesToProcessQueue.size(); i++) {
+                CompletableFuture<Void> future = CompletableFuture.runAsync(new Parallelization());
+                worker.add(future);
+            }
         }
 
-        jpegWriter.dispose();
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(worker.toArray(new CompletableFuture[worker.size()]));
+        allFutures.get();
     }
 }
