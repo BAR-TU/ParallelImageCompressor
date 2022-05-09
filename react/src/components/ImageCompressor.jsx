@@ -21,6 +21,16 @@ class imageCompressor extends React.Component {
   fileObj = [];
   fileArray = [];
 
+  callApiLossless() {
+    fetch('http://localhost:8080/api/compress/lossless', { method: 'GET' })
+        .then(data => console.log(data))
+  }
+
+  callApiLossy() {
+    fetch('http://localhost:8080/api/compress/lossy', { method: 'GET' })
+        .then(data => data.json())
+  }
+
   uploadMultipleFiles(e) {
     this.fileObj.push(e.target.files)
     for (let i = 0; i < this.fileObj[0].length; i++) {
@@ -55,17 +65,25 @@ class imageCompressor extends React.Component {
 
   click = e => {
     e.preventDefault();
-
-    const options = {
-      maxSizeMB: 2,
-      maxWidthOrHeight: 800,
-      useWebWorker: true
-    };
-
-    if (options.maxSizeMB >= this.state.originalImage.size / 1024) {
-      alert("Bring a bigger image");
-      return 0;
+    var el = document.getElementById("optionsCompress");
+    var option = el.value;
+    if(option==="lossless") {
+      this.callApiLossless();
     }
+    else if(option==="lossy") {
+      this.callApiLossy();
+    }
+
+    // const options = {
+    //   maxSizeMB: 2,
+    //   maxWidthOrHeight: 800,
+    //   useWebWorker: true
+    // };
+    //
+    // if (options.maxSizeMB >= this.state.originalImage.size / 1024) {
+    //   alert("Bring a bigger image");
+    //   return 0;
+    // }
 
    // let output;
     // imageCompression(this.state.originalImage, options).then(x => {
@@ -114,11 +132,9 @@ class imageCompressor extends React.Component {
             </div>
             <h4 className="mt-20">Compression options:</h4>
             Select compression quality:
-            <select className="form-select form-select-lg">
-              <option>Retain picture quality</option>
-              <option value="soft">Soft</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
+            <select id="optionsCompress" className="form-select form-select-lg">
+              <option value="lossless">Lossless compression</option>
+              <option value="lossy">Lossy compression</option>
             </select>
           </div>
 
