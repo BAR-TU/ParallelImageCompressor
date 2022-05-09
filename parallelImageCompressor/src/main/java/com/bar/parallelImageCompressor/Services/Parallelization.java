@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -94,10 +95,8 @@ public class Parallelization implements Runnable {
     }
 
     SubImage[] processIntoChunks(int cores) throws IOException {
-        System.setProperty("http.agent", "Chrome");
-
-        URL url = new URL(Objects.requireNonNull(Compressor.imagesToProcessQueue.poll()));
-        InputStream is = url.openStream();
+        File file = new File(Objects.requireNonNull(Compressor.imagesToProcessQueue.poll()));
+        InputStream is = new FileInputStream(file);
         BufferedImage image = ImageIO.read(is);
         compressedImage = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
 
@@ -119,6 +118,7 @@ public class Parallelization implements Runnable {
 
         SubImage[] imgs = new SubImage[Integer.parseInt(String.valueOf(numOfChunks))];
 
+        is.close();
         return divideToSubImages(image, imgs);
     }
 
