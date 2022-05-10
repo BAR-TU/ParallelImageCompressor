@@ -1,5 +1,6 @@
 package com.bar.parallelImageCompressor.Controllers;
 
+import com.bar.parallelImageCompressor.Classes.SubImage;
 import com.bar.parallelImageCompressor.Services.Parallelization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
@@ -20,9 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -105,7 +105,19 @@ public class Compressor {
             }
         }
 
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(worker.toArray(new CompletableFuture[worker.size()]));
-        allFutures.get();
+        for(Iterator<CompletableFuture<Void>> iterator = worker.iterator(); iterator.hasNext();) {
+            iterator.next().get();
+        }
+
+        //CompletableFuture<Void> allFutures = CompletableFuture.allOf(worker.toArray(new CompletableFuture[worker.size()]));
+       // allFutures.get();
+    }
+
+    public static synchronized void saveSubImage(BufferedImage compressImg, SubImage preCompressedImage, BufferedImage compressedImage) {
+        Graphics2D writeToImage = compressedImage.createGraphics();
+        writeToImage.drawImage(compressImg, preCompressedImage.getSrc_first_x(), preCompressedImage.getSrc_first_y(),
+                               preCompressedImage.getSrc_second_x(), preCompressedImage.getSrc_second_y(), 0, 0,
+                               preCompressedImage.getImage().getWidth(), preCompressedImage.getImage().getHeight(), null);
+        writeToImage.dispose();
     }
 }

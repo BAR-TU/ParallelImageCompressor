@@ -11,6 +11,8 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.concurrent.*;
 
+import static com.bar.parallelImageCompressor.Controllers.Compressor.saveSubImage;
+
 public class Producer extends RecursiveAction {
     SubImage[] imgs;
     int threshold;
@@ -45,35 +47,25 @@ public class Producer extends RecursiveAction {
         for (int i = 0; i < imgs.length; i++)
         {
             if("lossy".equals(flag)) {
-                ExecutorService executorService = Executors.newFixedThreadPool(imgs.length);
-                Future<BufferedImage> future = executorService.submit(new LossyCompression(imgs[i].getImage()));
-                BufferedImage compressImg = future.get();
-                executorService.shutdown();
-                synchronized (this) {
-                    saveSubImage(compressImg, imgs[i]);
-                }
+                //ExecutorService executorService = Executors.newFixedThreadPool(imgs.length);
+                LossyCompression lossyCompression = new LossyCompression(imgs[i].getImage());
+                //Future<BufferedImage> future = executorService.submit(new LossyCompression(imgs[i].getImage()));
+                BufferedImage compressImg = lossyCompression.call();
+                //executorService.shutdown();
+                saveSubImage(compressImg, imgs[i], compressedImage);
 
             } else if("lossless".equals(flag)) {
                 ExecutorService executorService = Executors.newFixedThreadPool(imgs.length);
                 Future<BufferedImage> future = executorService.submit(new HuffmanCoding(imgs[i].getImage()));
                 BufferedImage compressImg = future.get();
                 executorService.shutdown();
-                synchronized (this) {
-                    saveSubImage(compressImg, imgs[i]);
-                }
+                saveSubImage(compressImg, imgs[i], compressedImage);
             }
 //            Thread.sleep(1000);
         }
 
     }
 
-    private void saveSubImage(BufferedImage compressImg, SubImage preCompressedImage) {
-        Graphics2D writeToImage = compressedImage.createGraphics();
-        writeToImage.drawImage(compressImg, preCompressedImage.getSrc_first_x(), preCompressedImage.getSrc_first_y(),
-                preCompressedImage.getSrc_second_x(), preCompressedImage.getSrc_second_y(), 0, 0,
-                preCompressedImage.getImage().getWidth(), preCompressedImage.getImage().getHeight(), null);
-        writeToImage.dispose();
-    }
     private Collection<Producer> createSubtasks() {
         List<Producer> dividedTasks = new ArrayList<>();
         dividedTasks.add(new Producer(Arrays.copyOfRange(imgs, 0, threshold), threshold, compressedImage, flag));

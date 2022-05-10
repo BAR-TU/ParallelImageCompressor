@@ -17,7 +17,7 @@ import java.util.List;
 import java.awt.*;
 import java.util.concurrent.Callable;
 
-public class LossyCompression implements Callable<BufferedImage> {
+public class LossyCompression {
     private FileInputStream inputStream;
     private byte[] data;
     private Graph graph;
@@ -41,7 +41,6 @@ public class LossyCompression implements Callable<BufferedImage> {
         this.imageToConvert = image;
     }
 
-        @Override
         public BufferedImage call() {
         File file = new File("tmpimg" + Compressor.subImgsNameNumber.getAndAdd(1) + ".bmp");
         BufferedImage bim = null;
@@ -214,7 +213,7 @@ public class LossyCompression implements Callable<BufferedImage> {
 
         long endTime = System.nanoTime();
         long duration = endTime - startTime;
-        System.out.println("Encode speed:" + " " + duration);
+//        System.out.println("Encode speed:" + " " + duration);
     }
 
     private void lossyDecode() {
@@ -331,8 +330,8 @@ public class LossyCompression implements Callable<BufferedImage> {
 
         long endTime = System.nanoTime();
         long duration = endTime - startTime;
-        System.out.println("Decode speed:" + " " + duration);
-        System.out.println("Compress Rate: " + (double)data.length / compressedDataInByte.length);
+//        System.out.println("Decode speed:" + " " + duration);
+//        System.out.println("Compress Rate: " + (double)data.length / compressedDataInByte.length);
     }
 
     public double [][] matrixMultiple(double [][] firstMatrix, double [][] secondMatrix) {

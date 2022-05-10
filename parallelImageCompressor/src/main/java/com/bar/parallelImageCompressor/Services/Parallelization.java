@@ -21,7 +21,7 @@ import static com.bar.parallelImageCompressor.Controllers.Compressor.finalImgNam
 public class Parallelization implements Runnable {
 
     public BufferedImage compressedImage;
-    static Collection<Producer> taskss = new ArrayList<>();
+    static Collection<Producer> taskss = Collections.synchronizedList(new ArrayList<>());
     static int imagesForSubtask = 1;
     public String flag;
 
@@ -36,7 +36,7 @@ public class Parallelization implements Runnable {
     public void Start() throws IOException {
         int coresToUse = Runtime.getRuntime().availableProcessors() - 1;
         ForkJoinPool pool = new ForkJoinPool(coresToUse);
-
+        System.out.println(coresToUse);
         SubImage[] imgs = processIntoChunks(coresToUse);
         System.out.println("Sub-images created");
 
