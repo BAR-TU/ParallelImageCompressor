@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 
-public class HuffmanCoding implements Callable<BufferedImage> {
+public class HuffmanCoding {
     Node root;
     ArrayList<PixelColor> colors;
     ArrayList<PixelColor> secondaryColorsArr;
@@ -26,13 +26,13 @@ public class HuffmanCoding implements Callable<BufferedImage> {
     }
     
     public void getColorsFromImage(String imageFile){
-        File file = new File(imageFile + ".bmp");
+//        File file = new File(imageFile + ".bmp");
         try{
-            FileWriter writer = new FileWriter(imageFile + "pixel_values.txt");
-            BufferedImage img = ImageIO.read(file);
-            for (int y = 0; y < img.getHeight(); y++) {
-                for (int x = 0; x < img.getWidth(); x++) {
-                    int pixel = img.getRGB(x,y);
+//            FileWriter writer = new FileWriter(imageFile + "pixel_values.txt");
+//            BufferedImage img = ImageIO.read(im);
+            for (int y = 0; y < imageToCompress.getHeight(); y++) {
+                for (int x = 0; x < imageToCompress.getWidth(); x++) {
+                    int pixel = imageToCompress.getRGB(x,y);
                     Color color = new Color(pixel, true);
                     int red = color.getRed();
                     int green = color.getGreen();
@@ -52,15 +52,15 @@ public class HuffmanCoding implements Callable<BufferedImage> {
                     }
                     colors.add(new PixelColor(red, green, blue, alpha, binary, hexa, frequency));
 
-                    writer.append(binary);
-                    writer.flush();
+//                    writer.append(binary);
+//                    writer.flush();
                 }
-                writer.append("\n");
+//                writer.append("\n");
             }
             mh = new MinHeap(colors.size()); // Creating MinHeap with size of Colors ArrayList
             
             quickSort(colors, 0, colors.size() - 1);
-            writer.close();
+//            writer.close();
             for(int i = 0; i < colors.size(); i++){
                 mh.insert(new Node(colors.get(i)));
             }
@@ -160,14 +160,14 @@ public class HuffmanCoding implements Callable<BufferedImage> {
     }
 
     public void generateImage(String imageFile){
-        File file = new File(imageFile + ".bmp");
+//        File file = new File(imageFile + ".bmp");
         File newImageFile = new File(imageFile + "regenerated.png");
         try{
-            BufferedImage img = ImageIO.read(file);
-            BufferedImage regenImage = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
-            for (int y = 0, z = 0; y < img.getHeight(); y++)
+//            BufferedImage img = ImageIO.read(file);
+            BufferedImage regenImage = new BufferedImage(imageToCompress.getWidth(), imageToCompress.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            for (int y = 0, z = 0; y < imageToCompress.getHeight(); y++)
             {
-                for (int x = 0; x < img.getWidth(); x++)
+                for (int x = 0; x < imageToCompress.getWidth(); x++)
                 {
                     String bits = secondaryColorsArr.get(z++).getOldBits();
                     int red = Integer.parseInt(bits.substring(0, 8), 2);
@@ -182,7 +182,7 @@ public class HuffmanCoding implements Callable<BufferedImage> {
         }
         catch(Exception e){
             System.out.println(e);
-        }  
+        }
     }
     
     public BufferedImage controller() throws IOException {
@@ -199,10 +199,12 @@ public class HuffmanCoding implements Callable<BufferedImage> {
         setEncoding();
         generateImage(pathname);
         File outputFile = new File(pathname + "regenerated.png");
-        return  ImageIO.read(outputFile);
+        BufferedImage bim = ImageIO.read(outputFile);
+        file.delete();
+        outputFile.delete();
+        return  bim;
     }
 
-    @Override
     public BufferedImage call() throws Exception {
         return controller();
     }

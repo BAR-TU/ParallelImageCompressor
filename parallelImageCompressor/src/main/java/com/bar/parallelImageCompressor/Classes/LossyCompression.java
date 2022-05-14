@@ -52,7 +52,7 @@ public class LossyCompression {
         if (file == null) {
             System.exit(1);
         }
-        String fileExtension = file.getName().substring(file.getName().lastIndexOf(".") + 1, file.getName().length());
+        String fileExtension = file.getName().substring(file.getName().lastIndexOf(".") + 1);
         if (fileExtension.equals("bmp")) {
             try {
                 bim = lossyDisplay(file);

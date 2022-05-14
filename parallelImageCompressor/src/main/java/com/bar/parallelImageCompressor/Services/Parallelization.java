@@ -21,12 +21,15 @@ import static com.bar.parallelImageCompressor.Controllers.Compressor.finalImgNam
 public class Parallelization implements Runnable {
 
     public BufferedImage compressedImage;
-    static Collection<Producer> taskss = Collections.synchronizedList(new ArrayList<>());
+
+    public String compressedImageType;
+    Collection<Producer> taskss = Collections.synchronizedList(new ArrayList<>());
     static int imagesForSubtask = 1;
     public String flag;
 
     public Parallelization(String flag) {
         this.flag = flag;
+        this.taskss = Collections.synchronizedList(new ArrayList<>());
     }
 
     public Parallelization() {
@@ -51,8 +54,14 @@ public class Parallelization implements Runnable {
     }
 
     private void saveImage() throws IOException {
-        File outputFile = new File("img" + finalImgNameNumber.getAndAdd(1) + ".jpg");
-        ImageIO.write(compressedImage, "jpg", outputFile);
+        String format = "";
+        if ("lossy".equals(flag))
+            format = "jpg";
+        else
+            format = "png";
+
+        File outputFile = new File("img" + finalImgNameNumber.getAndAdd(1) + "." + format);
+        ImageIO.write(compressedImage, format, outputFile);
     }
 
     private void createTasks(SubImage[] imgs, int border) {
@@ -120,6 +129,9 @@ public class Parallelization implements Runnable {
     }
 
     private BufferedImage checkForSize(BufferedImage image) {
+        int imgWidth = image.getWidth();
+        int imgHeight = image.getHeight();
+
         int correctWidth = 0;
         int correctHeight = 0;
         if (image.getWidth() % 8 != 0) {
@@ -139,15 +151,20 @@ public class Parallelization implements Runnable {
             }
         }
 
-        if (correctHeight != 0 || correctWidth != 0) {
-            BufferedImage resized = new BufferedImage(correctWidth, correctHeight, image.getType());
-            Graphics2D graphics = resized.createGraphics();
-            graphics.drawImage(image, 0, 0, correctWidth, correctHeight, null);
-            graphics.dispose();
-            return resized;
-        }
+        if (correctWidth != 0)
+            imgWidth = correctWidth;
+        if (correctHeight != 0)
+            imgHeight = correctHeight;
 
-        return image;
+
+
+        BufferedImage img = new BufferedImage(imgWidth, imgHeight, image.getType());
+
+        Graphics2D graphics = img.createGraphics();
+        graphics.drawImage(image, 0, 0, imgWidth, imgHeight, null);
+        graphics.dispose();
+
+        return img;
     }
 
     private SubImage[] divideToSubImages(BufferedImage image, SubImage[] imgs) {

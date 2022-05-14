@@ -34,14 +34,14 @@ public class Producer extends RecursiveAction {
         } else {
             try {
                 processing(imgs);
-            } catch (IOException | InterruptedException | ExecutionException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
             }
         }
     }
 
-    private void processing(SubImage[] imgs) throws IOException, InterruptedException, ExecutionException {
+    private void processing(SubImage[] imgs) throws Exception {
 
 
         for (int i = 0; i < imgs.length; i++)
@@ -55,10 +55,12 @@ public class Producer extends RecursiveAction {
                 saveSubImage(compressImg, imgs[i], compressedImage);
 
             } else if("lossless".equals(flag)) {
-                ExecutorService executorService = Executors.newFixedThreadPool(imgs.length);
-                Future<BufferedImage> future = executorService.submit(new HuffmanCoding(imgs[i].getImage()));
-                BufferedImage compressImg = future.get();
-                executorService.shutdown();
+//                ExecutorService executorService = Executors.newFixedThreadPool(imgs.length);
+                HuffmanCoding huffmanCoding = new HuffmanCoding(imgs[i].getImage());
+//                Future<BufferedImage> future = executorService.submit(new HuffmanCoding(imgs[i].getImage()));
+//                BufferedImage compressImg = future.get();
+//                executorService.shutdown();
+                BufferedImage compressImg = huffmanCoding.call();
                 saveSubImage(compressImg, imgs[i], compressedImage);
             }
 //            Thread.sleep(1000);

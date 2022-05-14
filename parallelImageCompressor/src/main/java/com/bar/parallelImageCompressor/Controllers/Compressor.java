@@ -48,7 +48,7 @@ public class Compressor {
 
         parallelCompression("lossy");
 
-        System.out.println("Exiting...");
+        System.out.println("Compression finished successfully.");
     }
 
     @PostMapping(value="/lossless", consumes = "multipart/form-data")
@@ -57,7 +57,7 @@ public class Compressor {
 
         parallelCompression("lossless");
 
-        System.out.println("Exiting...");
+        System.out.println("Compression finished successfully.");
     }
 
     private void saveToDisk(MultipartFile[] images) {
