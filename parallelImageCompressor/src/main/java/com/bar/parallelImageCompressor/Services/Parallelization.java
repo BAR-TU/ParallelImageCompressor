@@ -11,8 +11,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
-import java.util.*;
+import java.util.Objects;
 import java.util.concurrent.*;
 
 import static com.bar.parallelImageCompressor.Controllers.Compressor.finalImgNameNumber;
@@ -21,7 +20,7 @@ import static com.bar.parallelImageCompressor.Controllers.Compressor.finalImgNam
 public class Parallelization implements Runnable {
 
     public BufferedImage compressedImage;
-    static Collection<Producer> taskss = Collections.synchronizedList(new ArrayList<>());
+    Producer task;
     static int imagesForSubtask = 1;
     public String flag;
 
@@ -40,9 +39,7 @@ public class Parallelization implements Runnable {
         SubImage[] imgs = processIntoChunks(coresToUse);
         System.out.println("Sub-images created");
 
-        int border = (int)Math.ceil(Double.parseDouble(String.valueOf(imgs.length)) / Double.parseDouble(String.valueOf(coresToUse)));
-
-        createTasks(imgs, border);
+        task = new Producer(imgs, imagesForSubtask, compressedImage, flag);
 
         compressImages(pool);
 
@@ -51,33 +48,22 @@ public class Parallelization implements Runnable {
     }
 
     private void saveImage() throws IOException {
-        File outputFile = new File("img" + finalImgNameNumber.getAndAdd(1) + ".jpg");
-        ImageIO.write(compressedImage, "jpg", outputFile);
-    }
+        String format = "";
+        if ("lossy".equals(flag))
+            format = "jpg";
+        else
+            format = "png";
 
-    private void createTasks(SubImage[] imgs, int border) {
-        if (imgs.length > border) {
-            createTasks(Arrays.copyOfRange(imgs, border, imgs.length), border);
-        }
-        if (border > imgs.length) {
-            taskss.add(new Producer(Arrays.copyOfRange(imgs, 0, imgs.length), imagesForSubtask, compressedImage, flag));
-            return;
-        }
-
-        taskss.add(new Producer(Arrays.copyOfRange(imgs, 0, border), imagesForSubtask, compressedImage, flag));
+        File outputFile = new File("img" + finalImgNameNumber.getAndAdd(1) + "." + format);
+        ImageIO.write(compressedImage, format, outputFile);
     }
 
     private void compressImages(ForkJoinPool pool) {
         System.out.println("Compressing...");
         try {
-            List<Future<Void>> futures = new ArrayList<>();
-            for (Producer p : taskss) {
-                futures.add(pool.submit(p));
-            }
+            Future<Void> future = pool.submit(task);
             System.out.println("Started all tasks");
-            for (Future<Void> future : futures) {
-                future.get(500, TimeUnit.SECONDS);
-            }
+            future.get(50000, TimeUnit.SECONDS);
         } catch (NullPointerException e) {
             e.printStackTrace();
         } catch (RejectedExecutionException e) {
@@ -102,8 +88,8 @@ public class Parallelization implements Runnable {
             double currPower = Math.pow(4.0, Double.parseDouble(String.valueOf(i)));
             if(currPower > cores) {
                 double prevPower = Math.pow(4.0, Double.parseDouble(String.valueOf(i - 1)));
-                long prevPowerDiff = Math.round(Double.valueOf(cores) - prevPower);
-                long currPowerDiff = Math.round(currPower - Double.valueOf(cores));
+                long prevPowerDiff = Math.round(cores - prevPower);
+                long currPowerDiff = Math.round(currPower - cores);
                 if (prevPowerDiff > currPowerDiff) {
                     numOfChunks = Math.round(currPower);
                     break;
@@ -120,6 +106,9 @@ public class Parallelization implements Runnable {
     }
 
     private BufferedImage checkForSize(BufferedImage image) {
+        int imgWidth = image.getWidth();
+        int imgHeight = image.getHeight();
+
         int correctWidth = 0;
         int correctHeight = 0;
         if (image.getWidth() % 8 != 0) {
@@ -139,15 +128,18 @@ public class Parallelization implements Runnable {
             }
         }
 
-        if (correctHeight != 0 || correctWidth != 0) {
-            BufferedImage resized = new BufferedImage(correctWidth, correctHeight, image.getType());
-            Graphics2D graphics = resized.createGraphics();
-            graphics.drawImage(image, 0, 0, correctWidth, correctHeight, null);
-            graphics.dispose();
-            return resized;
-        }
+        if (correctWidth != 0)
+            imgWidth = correctWidth;
+        if (correctHeight != 0)
+            imgHeight = correctHeight;
 
-        return image;
+        BufferedImage img = new BufferedImage(imgWidth, imgHeight, image.getType());
+
+        Graphics2D graphics = img.createGraphics();
+        graphics.drawImage(image, 0, 0, imgWidth, imgHeight, null);
+        graphics.dispose();
+
+        return img;
     }
 
     private SubImage[] divideToSubImages(BufferedImage image, SubImage[] imgs) {
