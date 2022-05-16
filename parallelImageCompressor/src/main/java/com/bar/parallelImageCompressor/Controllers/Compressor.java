@@ -17,6 +17,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
@@ -26,10 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RestController
 @RequestMapping("/api/compress")
 public class Compressor {
-
-	@Autowired
-	Parallelization parallelizationService;
-
 	public static ConcurrentLinkedQueue<String> imagesToProcessQueue = new ConcurrentLinkedQueue<>();
 
 	public static AtomicInteger finalImgNameNumber = new AtomicInteger();
@@ -67,7 +64,7 @@ public class Compressor {
 	private void uploadToLocalFileSystem(@RequestParam("img") MultipartFile img) throws IOException {
 		String tmpdir = Files.createTempDirectory("tmp").toFile().getAbsolutePath();
 
-		String fileName = StringUtils.cleanPath(img.getOriginalFilename());
+		String fileName = StringUtils.cleanPath(Objects.requireNonNull(img.getOriginalFilename()));
 		Path path = Paths.get(tmpdir + "\\" + fileName);
 
 		int extDotIndex = img.getOriginalFilename().lastIndexOf(".");

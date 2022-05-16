@@ -40,8 +40,6 @@ public class Producer extends RecursiveAction {
     }
 
     private void processing(SubImage[] imgs) throws Exception {
-
-
         for (int i = 0; i < imgs.length; i++)
         {
             if("lossy".equals(flag)) {
