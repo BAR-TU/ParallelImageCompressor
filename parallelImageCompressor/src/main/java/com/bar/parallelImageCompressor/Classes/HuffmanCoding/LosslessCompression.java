@@ -6,30 +6,25 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.Callable;
 
-public class HuffmanCoding {
+public class LosslessCompression {
     Node root;
     ArrayList<PixelColor> colors;
     ArrayList<PixelColor> secondaryColorsArr;
     MinHeap mh;
     BufferedImage imageToCompress;
     
-    public HuffmanCoding(BufferedImage imageToCompress){
-        this.colors = new ArrayList<PixelColor>();
-        secondaryColorsArr = new ArrayList<PixelColor>();
+    public LosslessCompression(BufferedImage imageToCompress){
+        this.colors = new ArrayList<>();
+        secondaryColorsArr = new ArrayList<>();
         root = null;
         this.imageToCompress = imageToCompress;
     }
     
-    public void getColorsFromImage(String imageFile){
-//        File file = new File(imageFile + ".bmp");
+    public void getColorsFromImage(){
         try{
-//            FileWriter writer = new FileWriter(imageFile + "pixel_values.txt");
-//            BufferedImage img = ImageIO.read(im);
             for (int y = 0; y < imageToCompress.getHeight(); y++) {
                 for (int x = 0; x < imageToCompress.getWidth(); x++) {
                     int pixel = imageToCompress.getRGB(x,y);
@@ -41,7 +36,7 @@ public class HuffmanCoding {
                     String hexa = toHexa(red, green, blue, alpha);
                     String binary = "" + toBinary(red) + toBinary(green) + toBinary(blue) + toBinary(alpha);
                     int frequency = 1;
-                    
+
                     secondaryColorsArr.add(new PixelColor(red, green, blue,alpha, binary, hexa));
                     for(int z = 0; z < colors.size(); z++){
                         if(colors.get(z).hexa.equals(hexa)){
@@ -52,15 +47,11 @@ public class HuffmanCoding {
                     }
                     colors.add(new PixelColor(red, green, blue, alpha, binary, hexa, frequency));
 
-//                    writer.append(binary);
-//                    writer.flush();
                 }
-//                writer.append("\n");
             }
             mh = new MinHeap(colors.size()); // Creating MinHeap with size of Colors ArrayList
             
             quickSort(colors, 0, colors.size() - 1);
-//            writer.close();
             for(int i = 0; i < colors.size(); i++){
                 mh.insert(new Node(colors.get(i)));
             }
@@ -100,11 +91,11 @@ public class HuffmanCoding {
         return;
     }
     
-    public void swap(int index1, int index2, ArrayList<PixelColor> param){
-        if(index1 < param.size() && index2 < param.size()){
-            PixelColor temp = param.get(index1);
-            param.set(index1, param.get(index2));
-            param.set(index2, temp);
+    public void swap(int currentLow, int high, ArrayList<PixelColor> param){
+        if(currentLow < param.size() && high < param.size()){
+            PixelColor temp = param.get(currentLow);
+            param.set(currentLow, param.get(high));
+            param.set(high, temp);
         }
     }
     
@@ -122,7 +113,7 @@ public class HuffmanCoding {
     }
     
     public Node formHuffmanTree(){
-        Node dummyRoot = null;
+        Node dummyRoot;
         while(mh.arr[1] != null){
             Node minOne = mh.deleteRoot();
             Node minTwo = mh.deleteRoot();
@@ -160,10 +151,8 @@ public class HuffmanCoding {
     }
 
     public void generateImage(String imageFile){
-//        File file = new File(imageFile + ".bmp");
         File newImageFile = new File(imageFile + "regenerated.png");
         try{
-//            BufferedImage img = ImageIO.read(file);
             BufferedImage regenImage = new BufferedImage(imageToCompress.getWidth(), imageToCompress.getHeight(), BufferedImage.TYPE_INT_ARGB);
             for (int y = 0, z = 0; y < imageToCompress.getHeight(); y++)
             {
@@ -187,13 +176,13 @@ public class HuffmanCoding {
     
     public BufferedImage controller() throws IOException {
         String pathname = "tmpimg" + Compressor.subImgsNameNumber.getAndAdd(1);
-        File file = new File(pathname  + ".bmp");
+        File file = new File(pathname  + ".png");
         try {
-            ImageIO.write(imageToCompress, "bmp", file);
+            ImageIO.write(imageToCompress, "png", file);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        getColorsFromImage(pathname);
+        getColorsFromImage();
         root = formHuffmanTree();
         encode(root, "");
         setEncoding();
